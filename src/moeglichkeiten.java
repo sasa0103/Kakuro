@@ -28,6 +28,8 @@ public class moeglichkeiten {
   	for(int i = 2; i <= 9; i++) {
   		insertFuerZellen(i);
   	}
+        
+        System.out.print(mengenFuerSumme);
   }
 
   /**
