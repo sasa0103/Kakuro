@@ -17,20 +17,31 @@ public class moeglichkeiten {
 	 */
   static Map<Integer, Set<Set<Integer>>> mengenFuerSumme;
 
-  public static void main(String... args) {
+  /*public static void main(String... args) {
+
+        
+        System.out.print(mengenFuerSumme);
+  }*/
+  
+   static Map<Integer, Set<Set<Integer>>> getSumme() {
   	// Menge initialisieren
   	mengenFuerSumme = new HashMap<Integer, Set<Set<Integer>>>();
-  	for(int i = 3; i <= 45; i++) {
+  	for(int i = 1; i <= 45; i++) {
   		mengenFuerSumme.put(i, new HashSet<Set<Integer>>());
   	}
 
   	// Alle Möglichen Zellenlängen
   	for(int i = 2; i <= 9; i++) {
   		insertFuerZellen(i);
+                int[] p = {i};
+                insertArray(p);
   	}
         
-        System.out.print(mengenFuerSumme);
-  }
+        int[] p = {1};
+        insertArray(p);
+       
+       return mengenFuerSumme;
+   }
 
   /**
    * Fügt in mengenFuerSumme an die richtige Stelle die Mengen für entsprechende Summen ein.
