@@ -30,8 +30,10 @@ public class solver {
     
     static Map<Integer, Set<Set<Integer>>> mengenFuerSumme;
     
-    static HashSet<Set<Integer>>[][] horizontal;
-    static HashSet<Set<Integer>>[][] vertical;
+    static LinkedList<Set<Integer>>[][] horizontal;
+    static LinkedList<Set<Integer>>[][] horizontalTemp;
+    static LinkedList<Set<Integer>>[][] vertical;
+    static LinkedList<Set<Integer>>[][] verticalTemp;
             
 
 /**
@@ -39,6 +41,8 @@ public class solver {
  */      
    public static void einlesen(String s)
    {
+       
+    
       StringTokenizer st = new StringTokenizer(s, ",");
       String temp;
       boolean ende = false;
@@ -92,15 +96,17 @@ public class solver {
      */
     public static void main(String[] args) { //  throws IOException {
         //String s = "(7,(0,0,(0,9),0,(0,14),(0,12),(0,23),0,(9,3),9,(17,15),6,4,7,(3,0),3,(22,0),9,1,8,4,0,0,(10,0),6,4,(1,6),1,0,0,0,(11,0),3,6,2,0,(0,2),(0,1),0,(0,7),(9,5),9,(3,0),2,1,(12,0),7,5,0))";
-        String s = "(7, (0, (0, 5), 0, 0, (0, 28), 0, (0, 11), (2, 0), 2, 0, (8, 6), 8, (9, 0), 9, (3, 0), 3, (5, 0), 1, 4, (2, 0), 2, 0, 0, (14, 8), 5, 9, 0, 0, 0, (8, 0), 8, (7, 0), 7, 0, 0, 0, 0, 0, (0, 7), 0, 0, (0, 5), 0, 0, (7, 0), 7, 0, (5, 0), 5))";
+        //String s = "(7, (0, (0, 5), 0, 0, (0, 28), 0, (0, 11), (2, 0), 2, 0, (8, 6), 8, (9, 0), 9, (3, 0), 3, (5, 0), 1, 4, (2, 0), 2, 0, 0, (14, 8), 5, 9, 0, 0, 0, (8, 0), 8, (7, 0), 7, 0, 0, 0, 0, 0, (0, 7), 0, 0, (0, 5), 0, 0, (7, 0), 7, 0, (5, 0), 5))";
         
         //String s = "(4, (0,(0,7),(0,3),0,(6,0),4,2,0,3,2,1,0,2,1,0,0))";
-        s = s.replaceAll(" ","");
+        String s = "(3,(0,(0,15),(0,8),(10,0),7,3,(13,0),8,5))";
+        s = s.replaceAll(" ","");        
+        
         einlesen(s);
-        for(int i=0; i<7; i++){
-            for(int j=0; j<7; j++){
-              System.out.print(einMatrix[i][j] + ",");
-              if(j==6) System.out.println(einMatrix[i][j] + ",");
+        for(int i=0; i<groesse; i++){
+            for(int j=0; j<groesse; j++){
+              if(j==groesse-1) System.out.println(einMatrix[i][j] + ",");
+              else System.out.print(einMatrix[i][j] + ",");
             }
         }
         
@@ -108,32 +114,75 @@ public class solver {
         
         System.out.println(mengenFuerSumme);
         
-        horizontal = (HashSet<Set<Integer>>[][])Array.newInstance(HashSet.class, groesse, groesse);
-        vertical = (HashSet<Set<Integer>>[][])Array.newInstance(HashSet.class, groesse, groesse);
+        horizontal = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
+        vertical = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
+        horizontalTemp = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
+        verticalTemp = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
         
         for(int j = 0; j < groesse; j++) {
             for(int k = 0; k < groesse; k++) {
-                horizontal[j][k] = new HashSet<Set<Integer>>();
-                vertical[j][k] = new HashSet<Set<Integer>>();
+                horizontal[j][k] = new LinkedList<Set<Integer>>();
+                vertical[j][k] = new LinkedList<Set<Integer>>();
+                verticalTemp[j][k] = new LinkedList<Set<Integer>>();
+                horizontalTemp[j][k] = new LinkedList<Set<Integer>>();
             }
         }
         
         calc();
+        
+        
+        for(int i=0;i<groesse;i++) {
+            for(int j=0;j<groesse;j++) {
+                int k = horizontalTemp[i][j].size();
+                if(k>0) {
+                    //horizontalTemp[i][j].add(horizontal[i][j].clone());
+                    //Set<Integer> x = horizontal[i][j].
+                    
+                    //horizontalTemp[i][j].add(x);
+                    for(int l=1;l<k;l++) {
+                        horizontalTemp[i][j].getFirst().addAll(horizontalTemp[i][j].getLast());
+                        horizontalTemp[i][j].removeLast();
+                        
+                        //verticalTemp[i][j].getFirst().addAll(vertical[i][j].get(l));
+                    }
+                }
+            }
+           
+        }
+        
+        for(int i=0;i<groesse;i++) {
+            for(int j=0;j<groesse;j++) {
+                int k = vertical[i][j].size();
+                if(k>0) {
+                    verticalTemp[i][j].add(vertical[i][j].getFirst());
+                    for(int l=1;l<k;l++) {
+                    
+                        verticalTemp[i][j].getFirst().addAll(vertical[i][j].get(l));
+                    }
+                }
+            }
+           
+        }
  
         System.out.println("------");
         
         for(int i=0;i<groesse;i++) {
             for(int k=0;k<groesse;k++) {
-                System.out.println(horizontal[i][k]);
-            }
+                
+                if(k==groesse-1) System.out.println(horizontal[i][k] + ",");            
+                else System.out.print(horizontal[i][k]+ "-|-");
+            }           
         }
         
         System.out.println("------");
         
         for(int i=0;i<groesse;i++) {
             for(int k=0;k<groesse;k++) {
-                System.out.println(vertical[i][k]);
+                
+                if(k==groesse-1) System.out.println(vertical[i][k] + ",");            
+                else System.out.print(vertical[i][k] + "-|-");
             }
+
         }
         
     }
@@ -169,6 +218,8 @@ public class solver {
                             for(Set<Integer> itr: resHor) { //for(Integer i : s)
                                 if(itr.size()==horizont) {
                                     horizontal[i][k].add(itr);
+                                    
+                                    horizontalTemp[i][k] = (LinkedList<Set<Integer>>)horizontal[i][k].clone();
                                     //System.out.println(itr);
                                 }
                             }
@@ -191,6 +242,8 @@ public class solver {
                                 //System.out.println(itr.size());
                                 if(itr.size()==verti) {
                                     vertical[k][j].add(itr);
+                                   
+                                    verticalTemp[k][j].add(itr);
                                 }
                             }
                         }
