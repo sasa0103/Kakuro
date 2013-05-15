@@ -30,12 +30,12 @@ public class solver {
     
     static Map<Integer, Set<Set<Integer>>> mengenFuerSumme; // beinhaltet die Moeglichkeiten
     
-    static LinkedList<Set<Integer>>[][] horizontal;
-    static LinkedList<Set<Integer>>[][] horizontalTemp;
+    static LinkedList<Set<Integer>>[][] horizontal; // beinhaltet alle Sets von Integer, die in der Horizontalen moeglich sind
+    static Set<Integer>[][] horizontalTemp; // beinhaltet alle Integers (nur einmal) in einer grossen Menge pro Feld
+    
     
     static LinkedList<Set<Integer>>[][] vertical;
-    static LinkedList<Set<Integer>>[][] verticalTemp;
-            
+    static Set<Integer>[][] verticalTemp;            
 
 /**
  * Diese Methode liest das Kakuro als String ein und speichert es als HashSet Matrix (einMatrix)
@@ -115,26 +115,58 @@ public class solver {
                 
         horizontal = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
         vertical = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
-        
-        horizontalTemp = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
-        verticalTemp = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
+        horizontalTemp = (Set<Integer>[][])Array.newInstance(Set.class,groesse,groesse);
+        verticalTemp = (Set<Integer>[][])Array.newInstance(Set.class,groesse,groesse);
         
         for(int j = 0; j < groesse; j++) {
             for(int k = 0; k < groesse; k++) {
                 horizontal[j][k] = new LinkedList<Set<Integer>>();
                 vertical[j][k] = new LinkedList<Set<Integer>>();
-                horizontalTemp[j][k] = new LinkedList<Set<Integer>>();
-                verticalTemp[j][k] = new LinkedList<Set<Integer>>();
+                
+                horizontalTemp[j][k] = new LinkedHashSet<Integer>();
+                verticalTemp[j][k] = new LinkedHashSet<Integer>();
             }
         }
+        
         
        calc(); // berechnet horizontal/vertical
         
        calcTemp(); //berechnet horizontalTemp/verticalTemp
 
+               
+        System.out.println("------");
+        
+        for(int i=0;i<groesse;i++) {
+            for(int k=0;k<groesse;k++) {
+                
+                if(k==groesse-1) System.out.println(horizontalTemp[i][k] + ",");            
+                else System.out.print(horizontalTemp[i][k]+ "-|-");
+            }           
+        }
+       
+       ds();
+       
        printAll();
     }
     
+    public static void ds() { //ds=durchschnitt        
+        for(int i=0;i<groesse;i++) {
+            for(int j=0;j<groesse;j++) {
+                if(horizontalTemp[i][j].size()==0) {
+                    horizontalTemp[i][j].addAll(verticalTemp[i][j]);
+                }
+                
+                if(verticalTemp[i][j].size()==0) {
+                    verticalTemp[i][j].addAll(horizontalTemp[i][j]);
+                }
+                
+                horizontalTemp[i][j].retainAll(verticalTemp[i][j]);
+            }
+        }
+    }
+    
+    
+    // Horizontal,HorizontalTemp,Vertical, VerticalTemp
     public static void printAll() {
         System.out.println("------");
         
@@ -151,10 +183,11 @@ public class solver {
         for(int i=0;i<groesse;i++) {
             for(int k=0;k<groesse;k++) {
                 
-                if(k==groesse-1) System.out.println(verticalTemp[i][k] + ",");            
-                else System.out.print(verticalTemp[i][k]+ "-|-");
+                if(k==groesse-1) System.out.println(horizontalTemp[i][k] + ",");            
+                else System.out.print(horizontalTemp[i][k]+ "-|-");
             }           
         }
+
         
         System.out.println("------");
         
@@ -166,27 +199,40 @@ public class solver {
             }
 
         }
+                 
+        System.out.println("------");
+        
+        for(int i=0;i<groesse;i++) {
+            for(int k=0;k<groesse;k++) {
+                
+                if(k==groesse-1) System.out.println(verticalTemp[i][k] + ",");            
+                else System.out.print(verticalTemp[i][k]+ "-|-");
+            }           
+        }
     }
     
     public static void calcTemp() {
         for(int i=0;i<groesse;i++) {
             
-            for(int j=0;j<groesse;j++) {
-            
-                int k = horizontal[i][j].size();
-                if(k>0) horizontalTemp[i][j].add((Set<Integer>) deepCopy.clone(horizontal[i][j].getFirst()));
+            for(int j=0;j<groesse;j++) {            
+                
+                // Vereinigt alle Mengen Von Integers in EINER Menge (LinkedHashSet) von Integers
+                int k = horizontal[i][j].size();              
+                if(k>0) horizontalTemp[i][j].addAll((Collection<? extends Integer>) deepCopy.clone(horizontal[i][j].getFirst()));
                 
                 for(int l=1;l<k;l++) {
-                    horizontalTemp[i][j].getFirst().addAll((Collection<? extends Integer>) deepCopy.clone(horizontal[i][j].get(l)));
+                    horizontalTemp[i][j].addAll((Collection<? extends Integer>) deepCopy.clone(horizontal[i][j].get(l)));
+                    
                 }
+                
                 
 
                 int m = vertical[i][j].size();
-                if(m>0) verticalTemp[i][j].add((Set<Integer>) deepCopy.clone(vertical[i][j].getFirst()));
+                if(m>0) verticalTemp[i][j].addAll((Collection<? extends Integer>) deepCopy.clone(vertical[i][j].getFirst()));
 
                 for(int n=1;n<m;n++) {
-                    verticalTemp[i][j].getFirst().addAll((Collection<? extends Integer>) deepCopy.clone(vertical[i][j].get(n)));
-                }                    
+                    verticalTemp[i][j].addAll((Collection<? extends Integer>) deepCopy.clone(horizontal[i][j].get(n)));
+                }
                 
             }
         }
@@ -204,24 +250,28 @@ public class solver {
                 
                 if(size==2) { // "size==2: Feld das berchnet werden muss            
                     
+                    // Es werden alle Felder nach rechts abgesucht, bis wir auf ein Feld stossen, was (siehe goRight)
+                    // a) es nicht mehr gibt, weil wir uns ausserhalb vom Feld befinden
+                    // b) Wir auf ein neues Feld der Form (x,y) stossen.
+                    // c) Wir auf ein schwarzes Feld stossen (0)
                     if(el.getFirst()!=0 && !checkHorizontal[i][j]) {
                         
-                        int horizont = goRight(i,j+1);
+                        int horizont = goRight(i,j+1); // Summe von Feldern
                         
                         for(int k=j+1;k<j+1+horizont;k++) {
                             
                             checkHorizontal[i][k] = true;
-                            Set<Set<Integer>> resHor = mengenFuerSumme.get(el.getFirst());
+                            Set<Set<Integer>> resHor = mengenFuerSumme.get(el.getFirst()); //Fragen die Zahl ab...
                                                         
-                            for(Set<Integer> itr: resHor) { //for(Integer i : s)
-                                if(itr.size()==horizont) {
+                            for(Set<Integer> itr: resHor) {
+                                if(itr.size()==horizont) { // ...aber nehmen nur Sets von Integern, deren Anzahl mit der Summe von Feldern uebereinstimmt.
                                     horizontal[i][k].add(itr);
                                 }
                             }
                         }
                     }
                     
-                     
+                    // Analog zu oben nur in der Vertikalen 
                     if(el.getLast()!=0 && !checkVertical[i][j]) {
                         
                         int verti = goDown(i+1,j); // Anzahl an Feldern
@@ -251,14 +301,6 @@ public class solver {
                 }
                 
             }
-        }
-        
-        for(int i=0;i<groesse;i++) {
-            for(int k=0;k<groesse;k++) {
-                
-                if(k==groesse-1) System.out.println(checkHorizontal[i][k] + ",");            
-                else System.out.print(checkHorizontal[i][k]+ ",");
-            }           
         }
         
     }
