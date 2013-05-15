@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.io.*;
+import java.util.Collection;
+
 
 /*
  * To change this template, choose Tools | Templates
@@ -22,16 +24,15 @@ import java.io.*;
  */
 public class solver {
 
-    static Map<Integer, Integer> eingabe;
-    static LinkedList<Integer>[][] einMatrix;
-    //static HashSet<Integer>[][] horizont;
-    //static HashSet<Integer>[][] vertikal;
+    static LinkedList<Integer>[][] einMatrix; // einMatrix beinhaltet das eingelesene Kakuro
+    
     static int groesse;
     
-    static Map<Integer, Set<Set<Integer>>> mengenFuerSumme;
+    static Map<Integer, Set<Set<Integer>>> mengenFuerSumme; // beinhaltet die Moeglichkeiten
     
     static LinkedList<Set<Integer>>[][] horizontal;
     static LinkedList<Set<Integer>>[][] horizontalTemp;
+    
     static LinkedList<Set<Integer>>[][] vertical;
     static LinkedList<Set<Integer>>[][] verticalTemp;
             
@@ -111,11 +112,10 @@ public class solver {
         }
         
         mengenFuerSumme = moeglichkeiten.getSumme();
-        
-        System.out.println(mengenFuerSumme);
-        
+                
         horizontal = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
         vertical = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
+        
         horizontalTemp = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
         verticalTemp = (LinkedList<Set<Integer>>[][])Array.newInstance(LinkedList.class, groesse, groesse);
         
@@ -123,47 +123,19 @@ public class solver {
             for(int k = 0; k < groesse; k++) {
                 horizontal[j][k] = new LinkedList<Set<Integer>>();
                 vertical[j][k] = new LinkedList<Set<Integer>>();
-                verticalTemp[j][k] = new LinkedList<Set<Integer>>();
                 horizontalTemp[j][k] = new LinkedList<Set<Integer>>();
+                verticalTemp[j][k] = new LinkedList<Set<Integer>>();
             }
         }
         
-        calc();
+       calc(); // berechnet horizontal/vertical
         
-        
-        for(int i=0;i<groesse;i++) {
-            for(int j=0;j<groesse;j++) {
-                int k = horizontalTemp[i][j].size();
-                if(k>0) {
-                    //horizontalTemp[i][j].add(horizontal[i][j].clone());
-                    //Set<Integer> x = horizontal[i][j].
-                    
-                    //horizontalTemp[i][j].add(x);
-                    for(int l=1;l<k;l++) {
-                        horizontalTemp[i][j].getFirst().addAll(horizontalTemp[i][j].getLast());
-                        horizontalTemp[i][j].removeLast();
-                        
-                        //verticalTemp[i][j].getFirst().addAll(vertical[i][j].get(l));
-                    }
-                }
-            }
-           
-        }
-        
-        for(int i=0;i<groesse;i++) {
-            for(int j=0;j<groesse;j++) {
-                int k = vertical[i][j].size();
-                if(k>0) {
-                    verticalTemp[i][j].add(vertical[i][j].getFirst());
-                    for(int l=1;l<k;l++) {
-                    
-                        verticalTemp[i][j].getFirst().addAll(vertical[i][j].get(l));
-                    }
-                }
-            }
-           
-        }
- 
+       calcTemp(); //berechnet horizontalTemp/verticalTemp
+
+       printAll();
+    }
+    
+    public static void printAll() {
         System.out.println("------");
         
         for(int i=0;i<groesse;i++) {
@@ -179,48 +151,71 @@ public class solver {
         for(int i=0;i<groesse;i++) {
             for(int k=0;k<groesse;k++) {
                 
+                if(k==groesse-1) System.out.println(verticalTemp[i][k] + ",");            
+                else System.out.print(verticalTemp[i][k]+ "-|-");
+            }           
+        }
+        
+        System.out.println("------");
+        
+        for(int i=0;i<groesse;i++) {
+            for(int k=0;k<groesse;k++) {
+                
                 if(k==groesse-1) System.out.println(vertical[i][k] + ",");            
                 else System.out.print(vertical[i][k] + "-|-");
             }
 
         }
-        
+    }
+    
+    public static void calcTemp() {
+        for(int i=0;i<groesse;i++) {
+            
+            for(int j=0;j<groesse;j++) {
+            
+                int k = horizontal[i][j].size();
+                if(k>0) horizontalTemp[i][j].add((Set<Integer>) deepCopy.clone(horizontal[i][j].getFirst()));
+                
+                for(int l=1;l<k;l++) {
+                    horizontalTemp[i][j].getFirst().addAll((Collection<? extends Integer>) deepCopy.clone(horizontal[i][j].get(l)));
+                }
+                
+
+                int m = vertical[i][j].size();
+                if(m>0) verticalTemp[i][j].add((Set<Integer>) deepCopy.clone(vertical[i][j].getFirst()));
+
+                for(int n=1;n<m;n++) {
+                    verticalTemp[i][j].getFirst().addAll((Collection<? extends Integer>) deepCopy.clone(vertical[i][j].get(n)));
+                }                    
+                
+            }
+        }
     }
     
     
     public static void calc() {
-
         boolean[][] checkHorizontal = new boolean[groesse][groesse];
         boolean[][] checkVertical = new boolean[groesse][groesse];
-                
+        
         for(int i=0;i<groesse;i++) {
             for(int j=0;j<groesse;j++) {
                 LinkedList<Integer> el = einMatrix[i][j];
                 int size = el.size();
-
-                //System.out.println(el.getFirst());
                 
-                if(size==2) {
-                    int horizont = 0;
-                    int verti = 0;
+                if(size==2) { // "size==2: Feld das berchnet werden muss            
                     
                     if(el.getFirst()!=0 && !checkHorizontal[i][j]) {
-                        horizont = goRight(i,j+1);
-                        //System.out.println("H " + el.getFirst() + " " + j + " " + horizont);
+                        
+                        int horizont = goRight(i,j+1);
+                        
                         for(int k=j+1;k<j+1+horizont;k++) {
-                            //System.out.println("HW " +el.getFirst()+ " "+el.getLast() + " "+ j + " " + horizont);
+                            
                             checkHorizontal[i][k] = true;
-                            
                             Set<Set<Integer>> resHor = mengenFuerSumme.get(el.getFirst());
-                            
-                            //System.out.print(resHor);
-                            
+                                                        
                             for(Set<Integer> itr: resHor) { //for(Integer i : s)
                                 if(itr.size()==horizont) {
                                     horizontal[i][k].add(itr);
-                                    
-                                    horizontalTemp[i][k] = (LinkedList<Set<Integer>>)horizontal[i][k].clone();
-                                    //System.out.println(itr);
                                 }
                             }
                         }
@@ -228,22 +223,18 @@ public class solver {
                     
                      
                     if(el.getLast()!=0 && !checkVertical[i][j]) {
-                        verti = goDown(i+1,j); // Anzahl an Feldern
-                        //System.out.println("W " + el.getLast() + " " + i + " " + verti);
+                        
+                        int verti = goDown(i+1,j); // Anzahl an Feldern
                         
                         for(int k=i+1;k<i+1+verti;k++) {
-                            checkVertical[k][j] = true;
                             
+                            checkVertical[k][j] = true;
                             Set<Set<Integer>> resVer = mengenFuerSumme.get(el.getLast());
                             
-                            //System.out.println(resVer);
-                            
                             for(Set<Integer> itr: resVer) { //for(Integer i : s)
-                                //System.out.println(itr.size());
+
                                 if(itr.size()==verti) {
                                     vertical[k][j].add(itr);
-                                   
-                                    verticalTemp[k][j].add(itr);
                                 }
                             }
                         }
@@ -251,10 +242,25 @@ public class solver {
                     
                     checkHorizontal[i][j] = true;
                     checkVertical[i][j] = true;
+                    
+                }
+                
+                if(size==1 && einMatrix[i][j].getFirst()==0) { // "Schwarzer block"
+                    checkHorizontal[i][j] = true;
+                    checkVertical[i][j] = true;
                 }
                 
             }
         }
+        
+        for(int i=0;i<groesse;i++) {
+            for(int k=0;k<groesse;k++) {
+                
+                if(k==groesse-1) System.out.println(checkHorizontal[i][k] + ",");            
+                else System.out.print(checkHorizontal[i][k]+ ",");
+            }           
+        }
+        
     }
     
     public static int goDown(int i,int j) {
